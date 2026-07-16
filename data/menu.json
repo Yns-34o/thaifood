@@ -1,0 +1,99 @@
+{
+  "categories": [
+    {
+      "id": "entrees",
+      "name": "Entrées",
+      "order": 1
+    },
+    {
+      "id": "plats",
+      "name": "Plats principaux",
+      "order": 2
+    },
+    {
+      "id": "desserts",
+      "name": "Desserts",
+      "order": 3
+    },
+    {
+      "id": "boissons",
+      "name": "Boissons",
+      "order": 4
+    }
+  ],
+  "dishes": [
+    {
+      "id": "pad-thai-royal",
+      "name": "Pad Thaï Royal",
+      "price": 16,
+      "img": "https://images.unsplash.com/photo-1611270629569-8b357cb88da9?w=600&q=80",
+      "desc": "Nouilles de riz sautées au wok, crevettes tigrées, pousses de soja, cacahuètes torréfiées et citron vert.",
+      "tag": "Best-seller",
+      "tagClass": "text-gold-400",
+      "categoryId": "plats",
+      "available": true,
+      "order": 1
+    },
+    {
+      "id": "curry-vert-authentique",
+      "name": "Curry Vert Authentique",
+      "price": 18,
+      "img": "https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=600&q=80",
+      "desc": "Pâte de curry verte maison, lait de coco onctueux, aubergines thaïes, basilic sacré et poulet fermier.",
+      "tag": "Piment 🌶️",
+      "tagClass": "text-green-300",
+      "categoryId": "plats",
+      "available": true,
+      "order": 2
+    },
+    {
+      "id": "tom-yum-kung",
+      "name": "Tom Yum Kung",
+      "price": 15,
+      "img": "https://images.unsplash.com/photo-1569562211093-4ed0d0758f12?w=600&q=80",
+      "desc": "Broth emblématique au citronnelle et galanga, crevettes géantes, champignons et huile de piment.",
+      "tag": "Soupe",
+      "tagClass": "text-green-300",
+      "categoryId": "entrees",
+      "available": true,
+      "order": 3
+    },
+    {
+      "id": "massaman-boeuf",
+      "name": "Massaman de Bœuf",
+      "price": 19,
+      "img": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80",
+      "desc": "Bœuf mijoté 4h, pomme de terre fondante, cacahuètes et épices massaman dans un lait de coco velouté.",
+      "tag": "Chef’s pick",
+      "tagClass": "text-gold-400",
+      "categoryId": "plats",
+      "available": true,
+      "order": 4
+    },
+    {
+      "id": "som-tam",
+      "name": "Som Tam",
+      "price": 12,
+      "img": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80",
+      "desc": "Salade de papaye verte pilée au mortier, tomates cerises, haricots verts et piment frais.",
+      "tag": "Frais & Piquant",
+      "tagClass": "text-green-300",
+      "categoryId": "entrees",
+      "available": true,
+      "order": 5
+    },
+    {
+      "id": "mango-sticky-rice",
+      "name": "Mango Sticky Rice",
+      "price": 10,
+      "img": "https://images.unsplash.com/photo-1576798315244-78c12e91498b?w=600&q=80",
+      "desc": "Riz gluant parfumé à la coco, mangue fraîche de saison et sirop de coco caramélisé.",
+      "tag": "Dessert",
+      "tagClass": "text-yellow-300",
+      "categoryId": "desserts",
+      "available": true,
+      "order": 6
+    }
+  ],
+  "promos": []
+}

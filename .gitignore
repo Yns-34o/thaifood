@@ -28,3 +28,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# images uploadees depuis le dashboard admin
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# variables d'environnement (identifiants admin)
+.env
+.env.local
