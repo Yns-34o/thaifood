@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Petits composants d'UI réutilisables pour le dashboard (palette du site).
 
@@ -19,6 +19,25 @@ const base =
 
 export function Input(props) {
   return <input {...props} className={`${base} ${props.className || ''}`} />;
+}
+
+// Champ avec enregistrement différé (debounce) : évite d'écrire en base à chaque
+// frappe. Indispensable pour les champs « en ligne » (nom de catégorie, ordre…)
+// car chaque PUT réécrit tout le menu.json (read-modify-write) — sans debounce,
+// des frappes rapides se concurrencent et peuvent perdre des données.
+export function DebouncedInput({ value, onChange, debounce = 450, ...props }) {
+  const [v, setV] = useState(value ?? '');
+  useEffect(() => {
+    setV(value ?? '');
+  }, [value]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (v !== value) onChange(v);
+    }, debounce);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [v]);
+  return <Input value={v} onChange={(e) => setV(e.target.value)} {...props} />;
 }
 
 export function TextArea(props) {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useCart } from './CartContext';
+import { formatPrice } from '../lib/pricing';
 
 export default function Cart() {
   const { items, open, setOpen, updateQty, removeItem, count, total, checkout, lastOrder } =
@@ -96,7 +97,7 @@ export default function Cart() {
                         <iconify-icon icon="solar:trash-bin-trash-linear" />
                       </button>
                     </div>
-                    <div className="text-xs text-gold-400 mt-0.5">{item.price}€ l’unité</div>
+                    <div className="text-xs text-gold-400 mt-0.5">{formatPrice(item.price)} l’unité</div>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2">
                         <button
@@ -116,7 +117,7 @@ export default function Cart() {
                         </button>
                       </div>
                       <span className="text-sm font-medium text-cream-50">
-                        {item.price * item.qty}€
+                        {formatPrice(item.price * item.qty)}
                       </span>
                     </div>
                   </div>
@@ -131,7 +132,7 @@ export default function Cart() {
           <div className="px-6 py-5 border-t border-white/[0.06] bg-th-900">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-cream-50/50">Total</span>
-              <span className="font-serif text-2xl text-gold-400">{total}€</span>
+              <span className="font-serif text-2xl text-gold-400">{formatPrice(total)}</span>
             </div>
             <button
               onClick={checkout}
@@ -157,7 +158,7 @@ export default function Cart() {
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-cream-50">Commande confirmée !</div>
               <div className="text-xs text-cream-50/50 mt-0.5">
-                Total {lastOrder.total}€ · {lastOrder.date}
+                Total {formatPrice(lastOrder.total)} · {lastOrder.date}
               </div>
             </div>
           </div>

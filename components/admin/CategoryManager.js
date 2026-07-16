@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { api } from './api';
-import { Btn, Card, Field, Input } from './ui';
+import { Btn, Card, DebouncedInput, Field, Input } from './ui';
 
 export default function CategoryManager({ categories, dishes, reload }) {
   const sorted = [...categories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -27,8 +27,12 @@ export default function CategoryManager({ categories, dishes, reload }) {
   }
 
   async function update(cat, patch) {
-    await api(`/api/admin/categories/${cat.id}`, 'PUT', { ...cat, ...patch });
-    await reload();
+    try {
+      await api(`/api/admin/categories/${cat.id}`, 'PUT', { ...cat, ...patch });
+      await reload();
+    } catch (e) {
+      alert(e.message);
+    }
   }
 
   async function remove(cat) {
@@ -51,18 +55,19 @@ export default function CategoryManager({ categories, dishes, reload }) {
             return (
               <Card key={c.id} className="flex items-center gap-3">
                 <div className="flex-1">
-                  <Input
+                  <DebouncedInput
                     value={c.name}
-                    onChange={(e) => update(c, { name: e.target.value })}
+                    onChange={(val) => update(c, { name: val })}
                     className="font-medium"
                   />
-                  <p className="text-[11px] text-cream-50/40 mt-1">
-                    {count} plat(s) · ordre{' '}
-                    <input
+                  <p className="text-[11px] text-cream-50/40 mt-1 flex items-center gap-1.5 flex-wrap">
+                    <span>{count} plat(s)</span>
+                    <span className="text-cream-50/30">· ordre</span>
+                    <DebouncedInput
                       type="number"
                       value={c.order ?? 0}
-                      onChange={(e) => update(c, { order: Number(e.target.value) })}
-                      className="w-14 bg-transparent border-b border-white/10 text-cream-50/60 focus:outline-none focus:border-gold-400/60"
+                      onChange={(val) => update(c, { order: Number(val) || 0 })}
+                      className="!w-16 !px-2 !py-0.5 text-xs"
                     />
                   </p>
                 </div>

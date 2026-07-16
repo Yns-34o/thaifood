@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { api } from './api';
+import { formatPrice } from '../../lib/pricing';
 import { Btn, Card, Field, ImagePicker, Input, Select, TextArea, Toggle } from './ui';
 
 const TAG_COLORS = [
@@ -30,6 +31,8 @@ export default function DishManager({ dishes, categories, reload }) {
   const [editing, setEditing] = useState(null); // { isNew, ...dish }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [query, setQuery] = useState('');
+  const [filterCat, setFilterCat] = useState('all');
 
   const catName = (id) => categories.find((c) => c.id === id)?.name || '—';
 
@@ -139,15 +142,51 @@ export default function DishManager({ dishes, categories, reload }) {
     );
   }
 
+  // Tri stable : par ordre d'affichage, puis nom. Filtres : catégorie + recherche.
+  const sortedCats = [...categories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const sorted = [...dishes].sort(
+    (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)
+  );
+  const q = query.trim().toLowerCase();
+  const filtered = sorted.filter((d) => {
+    const matchCat = filterCat === 'all' || d.categoryId === filterCat;
+    const matchQ =
+      !q || d.name.toLowerCase().includes(q) || catName(d.categoryId).toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+  const defaultCatForNew = filterCat !== 'all' ? filterCat : sortedCats[0]?.id;
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-cream-50/50">{dishes.length} plat(s)</p>
-        <Btn onClick={() => setEditing({ ...blankDish(categories[0]?.id), isNew: true })}>+ Ajouter un plat</Btn>
+      {/* Barre d'outils : recherche + filtre catégorie + ajout */}
+      <div className="flex flex-col gap-3 mb-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-cream-50/50">
+            {filtered.length} / {dishes.length} plat(s)
+          </p>
+          <Btn onClick={() => setEditing({ ...blankDish(defaultCatForNew), isNew: true })}>+ Ajouter un plat</Btn>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Input
+            placeholder="🔎 Rechercher un plat ou une catégorie…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="sm:max-w-xs"
+          />
+          <Select value={filterCat} onChange={(e) => setFilterCat(e.target.value)} className="sm:max-w-[220px]">
+            <option value="all">Toutes les catégories</option>
+            {sortedCats.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </Select>
+          {(query || filterCat !== 'all') && (
+            <Btn variant="ghost" onClick={() => { setQuery(''); setFilterCat('all'); }}>Réinitialiser</Btn>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
-        {dishes.map((d) => (
+        {filtered.map((d) => (
           <Card key={d.id} className="flex items-center gap-4">
             <img src={d.img} alt="" className="w-14 h-14 rounded-lg object-cover bg-th-950 flex-shrink-0" />
             <div className="flex-1 min-w-0">
@@ -158,7 +197,7 @@ export default function DishManager({ dishes, categories, reload }) {
                 )}
               </div>
               <p className="text-xs text-cream-50/40">
-                {catName(d.categoryId)} · {d.price}€ {d.tag ? `· ${d.tag}` : ''}
+                {catName(d.categoryId)} · {formatPrice(d.price)} {d.tag ? `· ${d.tag}` : ''}
               </p>
             </div>
             <div className="flex gap-2 flex-shrink-0">
@@ -167,8 +206,12 @@ export default function DishManager({ dishes, categories, reload }) {
             </div>
           </Card>
         ))}
-        {dishes.length === 0 && (
-          <p className="text-center text-cream-50/40 py-12">Aucun plat. Cliquez sur « Ajouter un plat ».</p>
+        {filtered.length === 0 && (
+          <p className="text-center text-cream-50/40 py-12">
+            {dishes.length === 0
+              ? 'Aucun plat. Cliquez sur « Ajouter un plat ».'
+              : 'Aucun plat ne correspond à votre recherche.'}
+          </p>
         )}
       </div>
     </div>

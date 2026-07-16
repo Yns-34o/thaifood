@@ -5,7 +5,7 @@ import Img from './Img';
 import useReveal from './useReveal';
 import { useCart } from './CartContext';
 import useMenu from './useMenu';
-import { applyPromo, getApplicablePromo, promoLabel } from '../lib/pricing';
+import { applyPromo, getApplicablePromo, formatPrice, promoLabel } from '../lib/pricing';
 
 export default function Commander() {
   const ref = useReveal();
@@ -124,10 +124,10 @@ function DishCard({ dish, promos, index, onAdd }) {
           <h3 className="font-serif text-lg text-cream-50">{dish.name}</h3>
           <div className="text-right whitespace-nowrap">
             {hasPromo && (
-              <div className="text-xs text-cream-50/40 line-through">{originalPrice}€</div>
+              <div className="text-xs text-cream-50/40 line-through">{formatPrice(originalPrice)}</div>
             )}
             <span className={`font-medium text-lg ${hasPromo ? 'text-red-300' : 'text-gold-400'}`}>
-              {finalPrice}€
+              {formatPrice(finalPrice)}
             </span>
           </div>
         </div>
