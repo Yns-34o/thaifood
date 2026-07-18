@@ -1,35 +1,73 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { computeTotals } from '../lib/pricing';
 
 const CartContext = createContext(null);
+
+const STORAGE_KEY = 'tf77_cart_v1';
+
+// ============================================================================
+//  État global du panier + tunnel de commande.
+//
+//  Trois « étapes » gérées ici :
+//    'cart'     → aperçu du panier (quantités, total)
+//    'form'     → coordonnées client + choix retrait/livraison
+//    'success'  → confirmation (commande enregistrée côté serveur)
+//
+//  Le panier est persisté dans localStorage : il survit aux rechargements.
+// ============================================================================
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState('cart');
   const [lastOrder, setLastOrder] = useState(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydratation depuis le localStorage (côté navigateur uniquement).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setItems(parsed);
+      }
+    } catch {
+      /* localStorage indisponible : on ignore. */
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persistance à chaque modification (une fois hydraté).
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      /* quota / mode privé : on ignore. */
+    }
+  }, [items, hydrated]);
 
   const addToCart = useCallback((name, price, image) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.name === name);
       if (existing) {
-        return prev.map((i) =>
-          i.name === name ? { ...i, qty: i.qty + 1 } : i
-        );
+        return prev.map((i) => (i.name === name ? { ...i, qty: i.qty + 1 } : i));
       }
       return [...prev, { name, price, image, qty: 1 }];
     });
+    setStep('cart');
     setOpen(true);
   }, []);
 
   const updateQty = useCallback((name, delta) => {
     setItems((prev) =>
-      prev
-        .flatMap((i) => {
-          if (i.name !== name) return [i];
-          const qty = i.qty + delta;
-          return qty <= 0 ? [] : [{ ...i, qty }];
-        })
+      prev.flatMap((i) => {
+        if (i.name !== name) return [i];
+        const qty = i.qty + delta;
+        return qty <= 0 ? [] : [{ ...i, qty }];
+      })
     );
   }, []);
 
@@ -39,29 +77,98 @@ export function CartProvider({ children }) {
 
   const clearCart = useCallback(() => setItems([]), []);
 
-  const checkout = useCallback(() => {
-    if (items.length === 0) return;
-    setLastOrder({ items, total: totalValue(items), date: new Date().toLocaleString('fr-FR') });
-    setItems([]);
+  const openCart = useCallback(() => {
+    setOpen(true);
+    // On revient à l'aperçu panier si on était sur l'écran de confirmation.
+    setStep((s) => (s === 'success' ? 'cart' : s));
+  }, []);
+
+  const goCheckout = useCallback(() => setStep('form'), []);
+  const goCart = useCallback(() => setStep('cart'), []);
+
+  // Valide la commande auprès de l'API. Renvoie { ok, order, error }.
+  const placeOrder = useCallback(
+    async (info) => {
+      if (items.length === 0) return { ok: false, error: 'Votre panier est vide.' };
+      const payload = {
+        type: info.type,
+        scheduledFor: info.scheduledFor || null,
+        customer: info.customer,
+        items: items.map((i) => ({
+          name: i.name,
+          price: i.price,
+          qty: i.qty,
+          image: i.image || null,
+        })),
+      };
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          return { ok: false, error: data.error || 'Erreur lors de la validation.' };
+        }
+        setLastOrder(data.order);
+        setItems([]);
+        setStep('success');
+        return { ok: true, order: data.order };
+      } catch {
+        return { ok: false, error: 'Réseau indisponible, réessayez.' };
+      }
+    },
+    [items]
+  );
+
+  const resetCheckout = useCallback(() => {
+    setLastOrder(null);
+    setStep('cart');
     setOpen(false);
-  }, [items]);
+  }, []);
 
   const count = items.reduce((s, i) => s + i.qty, 0);
-  const total = totalValue(items);
+  const { subtotal } = computeTotals(items, 'pickup'); // total marchandise (hors livraison)
 
   const value = useMemo(
     () => ({
-      items, open, setOpen, addToCart, updateQty, removeItem, clearCart,
-      checkout, count, total, lastOrder,
+      items,
+      open,
+      setOpen,
+      openCart,
+      addToCart,
+      updateQty,
+      removeItem,
+      clearCart,
+      count,
+      subtotal,
+      total: subtotal, // alias conservé (total marchandise)
+      // Tunnel de commande
+      step,
+      goCheckout,
+      goCart,
+      placeOrder,
+      lastOrder,
+      resetCheckout,
     }),
-    [items, open, addToCart, updateQty, removeItem, clearCart, checkout, count, total, lastOrder]
+    [
+      items,
+      open,
+      addToCart,
+      updateQty,
+      removeItem,
+      clearCart,
+      count,
+      subtotal,
+      step,
+      placeOrder,
+      lastOrder,
+      resetCheckout,
+    ]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
-}
-
-function totalValue(items) {
-  return items.reduce((s, i) => s + i.qty * i.price, 0);
 }
 
 export function useCart() {

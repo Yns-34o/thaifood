@@ -38,3 +38,6 @@ next-env.d.ts
 # variables d'environnement (identifiants admin)
 .env
 .env.local
+
+# commandes enregistrées (données client runtime, générées par /api/orders)
+/data/orders.json

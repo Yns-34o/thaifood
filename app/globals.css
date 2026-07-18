@@ -182,3 +182,33 @@ img.loaded { opacity: 1; }
 @media (max-width: 768px) {
   .hero-bg { background-attachment: scroll; }
 }
+
+/* Bouton « Ajouter » des cartes plats */
+.add-btn { transition: all 0.3s ease; }
+.add-btn:hover {
+  background: #c9a96e;
+  color: #0A1C0A;
+  border-color: #c9a96e;
+  box-shadow: 0 8px 24px rgba(201,169,110,0.25);
+  transform: translateY(-1px);
+}
+
+/* Anneau pulsé autour du cochage de confirmation */
+@keyframes pingSlow {
+  0% { transform: scale(1); opacity: 0.6; }
+  75%, 100% { transform: scale(1.7); opacity: 0; }
+}
+.animate-ping-slow { animation: pingSlow 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+/* Spinner (icône iconify) */
+iconify-icon.animate-spin { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Options des champs select / datetime sur fond sombre */
+.form-input option { background: #112B11; color: #f5f0e8; }
+
+/* Accessibilité : focus visible doré sur les éléments cliquables */
+button:focus-visible, a:focus-visible {
+  outline: 2px solid rgba(201,169,110,0.6);
+  outline-offset: 2px;
+}

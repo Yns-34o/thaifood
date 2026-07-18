@@ -102,42 +102,47 @@ function DishCard({ dish, promos, index, onAdd }) {
 
   return (
     <div
-      className={`dish-card reveal reveal-delay-${(index % 3) + 1} bg-white/[0.04] border border-white/[0.07] rounded-2xl overflow-hidden group`}
+      className={`dish-card reveal reveal-delay-${(index % 3) + 1} bg-white/[0.04] border border-white/[0.07] rounded-2xl overflow-hidden group flex flex-col`}
     >
       <div className="relative h-52 sm:h-56 overflow-hidden">
         <Img src={dish.img} alt={dish.name} className="w-full h-full object-cover" />
+        {/* Liséré + gradient de profondeur */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
         {hasPromo && (
-          <div className="absolute top-3 right-3 bg-red-500/90 px-3 py-1 rounded-full">
+          <div className="absolute top-3 right-3 bg-red-500/90 backdrop-blur-sm px-2.5 py-1 rounded-full flex items-center gap-1">
+            <iconify-icon icon="solar:gift-linear" className="text-[12px] text-white" />
             <span className="text-[11px] font-semibold text-white">Promo {promoLabel(promo)}</span>
           </div>
         )}
         {dish.tag && (
-          <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full">
+          <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full">
             <span className={`text-[11px] font-medium ${dish.tagClass || 'text-gold-400'}`}>
               {dish.tag}
             </span>
           </div>
         )}
-      </div>
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-2 gap-3">
-          <h3 className="font-serif text-lg text-cream-50">{dish.name}</h3>
-          <div className="text-right whitespace-nowrap">
-            {hasPromo && (
-              <div className="text-xs text-cream-50/40 line-through">{formatPrice(originalPrice)}</div>
-            )}
-            <span className={`font-medium text-lg ${hasPromo ? 'text-red-300' : 'text-gold-400'}`}>
-              {formatPrice(finalPrice)}
-            </span>
-          </div>
+        {/* Prix flottant sur l’image */}
+        <div className="absolute bottom-3 left-3 bg-th-950/85 backdrop-blur-md border border-gold-400/20 rounded-full px-3 py-1.5 flex items-center gap-2">
+          {hasPromo && (
+            <span className="text-[11px] text-cream-50/40 line-through">{formatPrice(originalPrice)}</span>
+          )}
+          <span className={`text-sm font-semibold ${hasPromo ? 'text-red-300' : 'text-gold-400'}`}>
+            {formatPrice(finalPrice)}
+          </span>
         </div>
-        <p className="text-sm text-cream-50/40 font-light leading-relaxed mb-4">{dish.desc}</p>
+      </div>
+      <div className="p-5 flex flex-col flex-1">
+        <h3 className="font-serif text-lg text-cream-50 leading-snug">{dish.name}</h3>
+        <p className="text-sm text-cream-50/40 font-light leading-relaxed mt-1.5 mb-4 line-clamp-2 flex-1">
+          {dish.desc}
+        </p>
         <button
           onClick={onAdd}
-          className="plus-btn w-10 h-10 rounded-full border border-gold-400/30 text-gold-400 flex items-center justify-center text-xl"
+          className="add-btn w-full py-2.5 rounded-xl border border-gold-400/30 text-gold-400 text-sm font-medium flex items-center justify-center gap-2"
           aria-label={`Ajouter ${dish.name} au panier`}
         >
-          <iconify-icon icon="solar:add-circle-linear" />
+          <iconify-icon icon="solar:add-circle-linear" className="text-base" />
+          Ajouter
         </button>
       </div>
     </div>

@@ -11,7 +11,7 @@ const LINKS = [
 ];
 
 export default function Navbar() {
-  const { count, setOpen } = useCart();
+  const { count, openCart } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Effet "scrolled" sur la navbar.
@@ -53,7 +53,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setOpen(true)}
+              onClick={openCart}
               className="relative p-2 group"
               aria-label="Panier"
             >
