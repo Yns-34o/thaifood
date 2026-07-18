@@ -1,13 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import staticMenu from '../data/menu.json';
 
 // ============================================================================
 //  Hook centralisé de récupération du menu — « Firebase-ready »
 // ----------------------------------------------------------------------------
-//  AUJOURD'HUI : fetch de /api/menu + polling léger (toutes les 15 s) pour
-//  que les modifications du dashboard apparaissent sur le site sans recharger
-//  la page manuellement.
+//  Le menu est EMBARQUÉ dans le bundle client (import de data/menu.json) :
+//  les plats s'affichent IMMÉDIATEMENT, sans attendre /api/menu. Indispensable
+//  sur les hébergements où l'API n'est pas disponible au runtime (statiques)
+//  ou où la lecture du fichier JSON échoue (serverless non tracé).
+//
+//  En complément, on interroge /api/menu (polling léger toutes les 15 s) pour
+//  récupérer les modifications live du dashboard QUAND l'API est disponible
+//  (ex: VPS en `next start`). Si elle échoue, on conserve le menu embarqué.
 //
 //  POUR PASSER À FIREBASE : remplacez le corps de ce hook par un
 //  `onSnapshot(collection(db, 'menu'), ...)` Firestore qui appelle setMenu.
@@ -17,17 +23,22 @@ import { useCallback, useEffect, useState } from 'react';
 const POLL_MS = 15000;
 
 export default function useMenu() {
-  const [menu, setMenu] = useState({ categories: [], dishes: [], promos: [] });
-  const [loading, setLoading] = useState(true);
+  const [menu, setMenu] = useState(staticMenu);
+  const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
       const res = await fetch('/api/menu', { cache: 'no-store' });
-      if (res.ok) setMenu(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        // On ne remplace QUE si l'API renvoie réellement des données :
+        // évite d'écraser le menu embarqué par une réponse vide (fs serverless).
+        if (data && ((data.dishes && data.dishes.length) || (data.categories && data.categories.length))) {
+          setMenu(data);
+        }
+      }
     } catch {
-      /* réseau indisponible : on garde l'état précédent */
-    } finally {
-      setLoading(false);
+      /* API indisponible : on conserve le menu embarqué */
     }
   }, []);
 
