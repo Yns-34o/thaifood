@@ -8,24 +8,16 @@
 //  Usage :  node scripts/build-menu.mjs
 // ============================================================================
 
-import { writeFileSync } from 'fs';
+import { readdirSync, existsSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { categories as catData, dishes as dishData } from './menu-data.mjs';
+import { unsplashFor } from './menu-images.mjs';
+import { assignSlugs } from './menu-slug.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(__dirname, '..', 'data', 'menu.json');
-
-// Slug stable à partir d'un nom (ex: "M3 · Avocat Saumon" -> "m3-avocat-saumon").
-function slug(s) {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/œ/g, 'oe')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
+const LOCAL_IMG_DIR = path.join(__dirname, '..', 'public', 'uploads', 'menu');
 
 const categories = catData.map(([id, name], i) => ({
   id,
@@ -33,22 +25,36 @@ const categories = catData.map(([id, name], i) => ({
   order: i + 1,
 }));
 
-// S'assure de l'unicité des ids de plats (suffixe -2, -3… si nécessaire).
-const usedIds = new Set();
-const dishes = dishData.map((d, i) => {
-  let base = slug(d.n);
-  let id = base;
-  let n = 2;
-  while (usedIds.has(id)) {
-    id = `${base}-${n++}`;
+// Index des photos locales téléchargées par fetch-menu-images.mjs.
+// Lu une fois : Set des noms de fichiers présents dans public/uploads/menu.
+const localFiles = existsSync(LOCAL_IMG_DIR)
+  ? new Set(readdirSync(LOCAL_IMG_DIR))
+  : new Set();
+
+// Renvoie l'URL locale /uploads/menu/<slug>.<ext> si la photo existe, sinon null
+// (auquel cas on bascule sur une photo Unsplash de fallback).
+const IMG_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+function localImgFor(id) {
+  for (const ext of IMG_EXTS) {
+    if (localFiles.has(`${id}${ext}`)) return `/uploads/menu/${id}${ext}`;
   }
-  usedIds.add(id);
+  return null;
+}
+
+// Slugs uniques alignés sur l'ordre des plats (partagés avec fetch-menu-images).
+const slugs = assignSlugs(dishData.map((d) => d.n));
+
+const dishes = dishData.map((d, i) => {
+  const id = slugs[i];
 
   return {
     id,
     name: d.n,
     price: d.p,
-    img: d.i,
+    // Images : en priorité la VRAIE photo du plat téléchargée depuis
+    // thaifood77340.com (360×240, voir fetch-menu-images.mjs). Fallback Unsplash
+    // par catégorie + nom pour les rares plats sans photo exploitable.
+    img: localImgFor(id) || unsplashFor(d.c, d.n),
     desc: d.d || '',
     tag: '',
     tagClass: 'text-gold-400',
@@ -66,7 +72,12 @@ writeFileSync(OUT, JSON.stringify(menu, null, 2), 'utf-8');
 const byCat = {};
 for (const d of dishes) byCat[d.categoryId] = (byCat[d.categoryId] || 0) + 1;
 
+const localCount = dishes.filter((d) => d.img.startsWith('/uploads/menu/')).length;
+
 console.log(`✓ menu.json généré : ${categories.length} catégories, ${dishes.length} plats`);
+console.log(
+  `  Images : ${localCount} vraies photos locales, ${dishes.length - localCount} fallback Unsplash`
+);
 console.log('  Répartition :');
 for (const c of categories) {
   console.log(`    ${c.name.padEnd(28)} ${byCat[c.id] || 0}`);

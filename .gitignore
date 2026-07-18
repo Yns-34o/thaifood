@@ -32,6 +32,8 @@ next-env.d.ts
 # images uploadees depuis le dashboard admin
 /public/uploads/*
 !/public/uploads/.gitkeep
+# … mais on versionne les vraies photos plats (build-time) téléchargées par scripts/fetch-menu-images.mjs
+!/public/uploads/menu/
 
 # variables d'environnement (identifiants admin)
 .env
